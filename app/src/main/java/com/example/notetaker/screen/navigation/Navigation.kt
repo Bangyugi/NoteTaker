@@ -26,7 +26,7 @@ fun Navigation (
             HomeScreen(navController = navController)
         }
         composable(
-            route = Screen.NoteScreen.route + "/{title}",
+            route = Screen.NoteScreen.route,
             arguments = listOf(
                 navArgument("title"){
                     type = NavType.StringType
