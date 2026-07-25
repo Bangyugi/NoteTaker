@@ -5,17 +5,18 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NoteDao {
-    @Query("SELECT * FROM note")
-    fun getAll(): List<NoteEntity>
+    @Query("SELECT * FROM note ORDER BY id DESC")
+    fun getAll(): Flow<List<NoteEntity>>
 
     @Query("SELECT * FROM note WHERE id = :id")
-    fun getById(id: Int): NoteEntity
+    suspend fun getById(id: Int): NoteEntity
 
-    @Query("SELECT * FROM note WHERE note LIKE '%' || :note || '%' ")
-    fun getByNote(note:String): List<NoteEntity>
+    @Query("SELECT * FROM note WHERE title LIKE '%' || :keyword || '%' OR content LIKE '%' || :keyword || '%'")
+    fun searchNote(keyword: String): Flow<List<NoteEntity>>
 
     @Insert
     suspend fun insertNote(note: NoteEntity)

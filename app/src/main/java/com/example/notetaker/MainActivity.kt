@@ -22,12 +22,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             NoteTakerTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-//
-                    Navigation(
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                    Navigation()
             }
         }
     }

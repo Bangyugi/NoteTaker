@@ -20,23 +20,23 @@ fun Navigation (
     NavHost(
         navController = navController,
         startDestination = Screen.HomeScreen.route,
-        modifier = modifier)
-    {
+    ){
         composable(route = Screen.HomeScreen.route){
             HomeScreen(navController = navController)
         }
         composable(
             route = Screen.NoteScreen.route,
             arguments = listOf(
-                navArgument("title"){
-                    type = NavType.StringType
-                    defaultValue = "Untitled"
-                    nullable=true
+                navArgument("noteId"){
+                    type = NavType.IntType
+                    defaultValue = -1
                 }
             )
         ){
-            entry ->
-            NoteScreen(title = entry.arguments?.getString("title"))
+                entry ->
+            val noteId = entry.arguments?.getInt("noteId") ?: -1
+            NoteScreen(navController = navController,
+                noteId = noteId)
         }
     }
 }
