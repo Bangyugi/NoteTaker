@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -31,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.notetaker.ad.BannerAdView
 import com.example.notetaker.screen.common.NoteItem
 import com.example.notetaker.screen.navigation.Screen
 
@@ -92,7 +94,7 @@ fun HomeScreen(
 
             if (notes.isEmpty()) {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxWidth().weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
                     Text("Không có ghi chú nào")
@@ -116,6 +118,8 @@ fun HomeScreen(
                     }
                 }
             }
+            Spacer(modifier = Modifier.weight(1f))
+            BannerAdView()
         }
     }
 }
