@@ -39,6 +39,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.notetaker.ad.BannerAdView
 import com.example.notetaker.ad.InterstitialAdManager
+import com.example.notetaker.ad.NativeAdview
 import com.example.notetaker.ad.RewardedAdManager
 import com.example.notetaker.ad.findActivity
 import com.example.notetaker.screen.common.NoteItem
@@ -130,6 +131,11 @@ fun HomeScreen(
                     } else null
                 },
                 singleLine = true
+            )
+
+            NativeAdview(
+                modifier = Modifier.fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
             if (notes.isEmpty()) {
