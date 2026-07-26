@@ -1,5 +1,7 @@
 package com.example.notetaker.screen.home
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,17 +26,23 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.notetaker.ad.BannerAdView
+import com.example.notetaker.ad.RewardedAdManager
+import com.example.notetaker.ad.findActivity
 import com.example.notetaker.screen.common.NoteItem
 import com.example.notetaker.screen.navigation.Screen
+import kotlin.math.log
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,6 +52,13 @@ fun HomeScreen(
 ) {
     val notes by viewModel.notes.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val context = LocalContext.current
+    val activity = remember(context) { context.findActivity() }
+    val rewardedAdManager = remember { RewardedAdManager() }
+
+    LaunchedEffect(Unit) {
+        rewardedAdManager.loadAd(context)
+    }
 
     Scaffold(
         topBar = {
@@ -54,7 +69,28 @@ fun HomeScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                navController.navigate(Screen.NoteScreen.createRoute(-1))
+                    if(activity != null){
+                        rewardedAdManager.showAd(
+                            activity = activity,
+                            onRewardEarned = {
+                                navController.navigate(Screen.NoteScreen.createRoute(-1))
+                            },
+                            onAdNotReady = {
+                                Toast.makeText(
+                                    context,
+                                    "Quảng cáo đang tải, vui lòng thử lại sau vài giây!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            },
+                            onAdDismissedWithoutReward =
+                                {
+                                    Log.d("HomeScreen", "HomeScreen: Người dùng chưa xem hết ad")
+                                }
+                        )
+                    }
+                    else{
+                        navController.navigate(Screen.NoteScreen.createRoute(-1))
+                    }
             }, shape = CircleShape) {
                 Icon(
                     imageVector = Icons.Default.Add,
@@ -94,7 +130,9 @@ fun HomeScreen(
 
             if (notes.isEmpty()) {
                 Box(
-                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
                     Text("Không có ghi chú nào")

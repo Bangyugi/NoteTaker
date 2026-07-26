@@ -95,4 +95,6 @@ dependencies {
 
     implementation("com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:1.2.1")
     implementation("androidx.lifecycle:lifecycle-process:2.8.7")
+
+
 }
