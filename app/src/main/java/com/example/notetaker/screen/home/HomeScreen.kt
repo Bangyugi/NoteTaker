@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.notetaker.ad.BannerAdView
+import com.example.notetaker.ad.InterstitialAdManager
 import com.example.notetaker.ad.RewardedAdManager
 import com.example.notetaker.ad.findActivity
 import com.example.notetaker.screen.common.NoteItem
@@ -54,10 +55,13 @@ fun HomeScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() }
+
     val rewardedAdManager = remember { RewardedAdManager() }
+    val interstitialAdManager = remember { InterstitialAdManager() }
 
     LaunchedEffect(Unit) {
         rewardedAdManager.loadAd(context)
+        interstitialAdManager.loadAd(context)
     }
 
     Scaffold(
@@ -139,7 +143,9 @@ fun HomeScreen(
                 }
             } else {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -147,7 +153,17 @@ fun HomeScreen(
                         NoteItem(
                             note = note,
                             onClick = {
-                                navController.navigate(Screen.NoteScreen.createRoute(note.id))
+                                if(activity != null){
+                                    interstitialAdManager.showAd(
+                                        activity = activity,
+                                        onAdDismissed = {
+                                            navController.navigate(Screen.NoteScreen.createRoute(note.id))
+                                        }
+                                    )
+                                }
+                                else{
+                                    navController.navigate(Screen.NoteScreen.createRoute(note.id))
+                                }
                             },
                             onDeleteClick = {
                                 viewModel.deleteNote(note)
@@ -156,7 +172,6 @@ fun HomeScreen(
                     }
                 }
             }
-            Spacer(modifier = Modifier.weight(1f))
             BannerAdView()
         }
     }
