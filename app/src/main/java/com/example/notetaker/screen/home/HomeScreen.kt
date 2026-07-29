@@ -56,12 +56,11 @@ fun HomeScreen(
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() }
 
-    val rewardedAdManager = remember { RewardedAdManager() }
-    val interstitialAdManager = remember { InterstitialAdManager() }
+
 
     LaunchedEffect(Unit) {
-        rewardedAdManager.loadAd(context)
-        interstitialAdManager.loadAd(context)
+        RewardedAdManager.loadAd(context)
+        InterstitialAdManager.loadAd(context)
     }
 
     Scaffold(
@@ -74,7 +73,7 @@ fun HomeScreen(
             FloatingActionButton(
                 onClick = {
                     if(activity != null){
-                        rewardedAdManager.showAd(
+                        RewardedAdManager.showAd(
                             activity = activity,
                             onRewardEarned = {
                                 navController.navigate(Screen.NoteScreen.createRoute(-1))
@@ -154,7 +153,7 @@ fun HomeScreen(
                             note = note,
                             onClick = {
                                 if(activity != null){
-                                    interstitialAdManager.showAd(
+                                    InterstitialAdManager.showAd(
                                         activity = activity,
                                         onAdDismissed = {
                                             navController.navigate(Screen.NoteScreen.createRoute(note.id))
