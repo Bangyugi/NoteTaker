@@ -39,6 +39,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.notetaker.ad.BannerAdView
 import com.example.notetaker.ad.InterstitialAdManager
+import com.example.notetaker.ad.NativeAdStyle
+import com.example.notetaker.ad.NativeAdComponent
 import com.example.notetaker.ad.RewardedAdManager
 import com.example.notetaker.ad.findActivity
 import com.example.notetaker.screen.common.NoteItem
@@ -59,7 +61,6 @@ fun HomeScreen(
 
 
     LaunchedEffect(Unit) {
-        RewardedAdManager.loadAd(context)
         InterstitialAdManager.loadAd(context)
     }
 
@@ -72,29 +73,28 @@ fun HomeScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    if(activity != null){
-                        RewardedAdManager.showAd(
+                    if (activity != null) {
+                        Toast.makeText(context, "Đang tải quảng cáo, vui lòng đợi...", Toast.LENGTH_SHORT).show()
+                        RewardedAdManager.loadAndShowAd(
                             activity = activity,
                             onRewardEarned = {
                                 navController.navigate(Screen.NoteScreen.createRoute(-1))
                             },
-                            onAdNotReady = {
+                            onAdFailedToLoad = { errorMsg ->
                                 Toast.makeText(
                                     context,
-                                    "Quảng cáo đang tải, vui lòng thử lại sau vài giây!",
+                                    "Không thể tải quảng cáo: $errorMsg",
                                     Toast.LENGTH_SHORT
                                 ).show()
                             },
-                            onAdDismissedWithoutReward =
-                                {
-                                    Log.d("HomeScreen", "HomeScreen: Người dùng chưa xem hết ad")
-                                }
+                            onAdDismissedWithoutReward = {
+                                Log.d("HomeScreen", "HomeScreen: Người dùng chưa xem hết ad")
+                            }
                         )
-                    }
-                    else{
+                    } else {
                         navController.navigate(Screen.NoteScreen.createRoute(-1))
                     }
-            }, shape = CircleShape) {
+                }, shape = CircleShape) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = "Add note",
@@ -129,6 +129,11 @@ fun HomeScreen(
                     } else null
                 },
                 singleLine = true
+            )
+
+            NativeAdComponent(
+                style = NativeAdStyle.MEDIUM,
+                modifier = Modifier.padding(horizontal = 8.dp)
             )
 
             if (notes.isEmpty()) {

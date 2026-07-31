@@ -8,6 +8,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.example.notetaker.ad.AppOpenAdManager
 import com.example.notetaker.ad.InterstitialAdManager
+import com.example.notetaker.ad.NativeAdManager
 import com.example.notetaker.ad.RewardedAdManager
 import com.google.android.libraries.ads.mobile.sdk.MobileAds
 import com.google.android.libraries.ads.mobile.sdk.initialization.InitializationConfig
@@ -34,7 +35,7 @@ DefaultLifecycleObserver{
             MobileAds.initialize(this@NoteTakerApplication, InitializationConfig.Builder(APP_ID).build()) {
                 appOpenAdManager.loadAd(this@NoteTakerApplication)
                 InterstitialAdManager.loadAd(this@NoteTakerApplication)
-                RewardedAdManager.loadAd(this@NoteTakerApplication)
+                NativeAdManager.loadAd(this@NoteTakerApplication, "home_native")
             }
         }
     }

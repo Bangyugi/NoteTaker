@@ -95,6 +95,8 @@ dependencies {
 
     implementation("com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:1.2.1")
     implementation("androidx.lifecycle:lifecycle-process:2.8.7")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("com.google.android.material:material:1.12.0")
 
 
 }
