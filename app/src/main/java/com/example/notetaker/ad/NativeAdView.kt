@@ -72,26 +72,30 @@ fun NativeAdComponent(
         }
     }
 
-    nativeAd?.let { ad ->
-        Box(modifier = modifier.fillMaxWidth()) {
-            AndroidView(
-                factory = { ctx ->
-                    val layoutId = when (style) {
-                        NativeAdStyle.SMALL -> R.layout.native_ad_small
-                        NativeAdStyle.MEDIUM -> R.layout.native_ad_medium
-                        NativeAdStyle.LARGE -> R.layout.native_ad_large
-                    }
-                    val themedContext = android.view.ContextThemeWrapper(ctx, R.style.Theme_NoteTaker)
-                    val view = LayoutInflater.from(themedContext).inflate(layoutId, null) as SdkNativeAdView
-                    populateNativeAdView(ad, view, style)
-                    view
-                },
-                update = { view ->
-                    populateNativeAdView(ad, view, style)
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
+    if (nativeAd != null) {
+        nativeAd?.let { ad ->
+            Box(modifier = modifier.fillMaxWidth()) {
+                AndroidView(
+                    factory = { ctx ->
+                        val layoutId = when (style) {
+                            NativeAdStyle.SMALL -> R.layout.native_ad_small
+                            NativeAdStyle.MEDIUM -> R.layout.native_ad_medium
+                            NativeAdStyle.LARGE -> R.layout.native_ad_large
+                        }
+                        val themedContext = android.view.ContextThemeWrapper(ctx, R.style.Theme_NoteTaker)
+                        val view = LayoutInflater.from(themedContext).inflate(layoutId, null) as SdkNativeAdView
+                        populateNativeAdView(ad, view, style)
+                        view
+                    },
+                    update = { view ->
+                        populateNativeAdView(ad, view, style)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
+    } else {
+        NativeAdShimmer(style = style, modifier = modifier)
     }
 }
 
