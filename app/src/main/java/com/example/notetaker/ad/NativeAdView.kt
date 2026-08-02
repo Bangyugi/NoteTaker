@@ -25,11 +25,16 @@ import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAd
 import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdLoadResult
 import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdLoader
 import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdRequest
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.seconds
 import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView as SdkNativeAdView
 
 enum class NativeAdStyle {
     SMALL,
-    MEDIUM
+    MEDIUM,
+    LARGE
 }
 
 private const val TEST_NATIVE_AD_UNIT_ID = "ca-app-pub-3940256099942544/1044960115"
@@ -46,14 +51,24 @@ fun NativeAdComponent(
 
     LaunchedEffect(placementKey, adUnitId) {
         if (!isPreviewMode) {
-            val cachedAd = NativeAdManager.getAd(placementKey)
-            if (cachedAd != null) {
-                nativeAd = cachedAd
-            } else {
+            val fetchAd = {
                 NativeAdManager.loadAd(context, placementKey, adUnitId) { loadedAd ->
                     nativeAd = loadedAd
                 }
             }
+            val cachedAd = NativeAdManager.getAd(placementKey)
+            if (cachedAd != null) {
+                nativeAd = cachedAd
+            } else {
+                fetchAd()
+            }
+
+            while (isActive) {
+                delay(30.seconds)
+                NativeAdManager.clearAd(placementKey)
+                fetchAd()
+            }
+
         }
     }
 
@@ -64,6 +79,7 @@ fun NativeAdComponent(
                     val layoutId = when (style) {
                         NativeAdStyle.SMALL -> R.layout.native_ad_small
                         NativeAdStyle.MEDIUM -> R.layout.native_ad_medium
+                        NativeAdStyle.LARGE -> R.layout.native_ad_large
                     }
                     val themedContext = android.view.ContextThemeWrapper(ctx, R.style.Theme_NoteTaker)
                     val view = LayoutInflater.from(themedContext).inflate(layoutId, null) as SdkNativeAdView
@@ -107,7 +123,7 @@ private fun populateNativeAdView(
         }
     }
 
-    val mediaView = if (style == NativeAdStyle.MEDIUM) {
+    val mediaView = if (style == NativeAdStyle.MEDIUM || style == NativeAdStyle.LARGE) {
         adView.findViewById<MediaView>(R.id.ad_media)
     } else null
 

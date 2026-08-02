@@ -28,7 +28,7 @@ object NativeAdManager {
         adUnitId: String = TEST_NATIVE_AD_UNIT_ID,
         onAdLoaded: ((NativeAd) -> Unit)? = null
     ) {
-        if (isAdReady(placementKey)) {
+        if (adMap[placementKey] != null) {
             Log.d(TAG, "[$placementKey] Native ad đã sẵn sàng.")
             getAd(placementKey)?.let { onAdLoaded?.invoke(it) }
             return
@@ -65,20 +65,19 @@ object NativeAdManager {
         }
     }
 
-    fun isAdReady(placementKey: String = DEFAULT_KEY): Boolean {
-        val ad = adMap[placementKey] ?: return false
-        val loadTime = loadTimeMap[placementKey] ?: 0L
-        val isExpired = (System.currentTimeMillis() - loadTime) > AD_EXPIRATION_TIME_MS
-        if (isExpired) {
-            Log.w(TAG, "[$placementKey] Native ad đã quá hạn 1 tiếng. Hủy ad cũ để nạp mới.")
-            clearAd(placementKey)
-            return false
-        }
-        return true
-    }
+//    fun isAdReady(placementKey: String = DEFAULT_KEY): Boolean {
+//        val ad = adMap[placementKey] ?: return false
+//        val loadTime = loadTimeMap[placementKey] ?: 0L
+//        val isExpired = (System.currentTimeMillis() - loadTime) > AD_EXPIRATION_TIME_MS
+//        if (isExpired) {
+//            Log.w(TAG, "[$placementKey] Native ad đã quá hạn 1 tiếng. Hủy ad cũ để nạp mới.")
+//            clearAd(placementKey)
+//            return false
+//        }
+//        return true
+//    }
 
     fun getAd(placementKey: String = DEFAULT_KEY): NativeAd? {
-        if (!isAdReady(placementKey)) return null
         return adMap[placementKey]
     }
 

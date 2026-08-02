@@ -132,7 +132,7 @@ fun HomeScreen(
             )
 
             NativeAdComponent(
-                style = NativeAdStyle.MEDIUM,
+                style = NativeAdStyle.LARGE,
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
 
