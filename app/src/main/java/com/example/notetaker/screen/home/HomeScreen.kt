@@ -28,6 +28,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -39,7 +41,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.notetaker.ad.BannerAdView
 import com.example.notetaker.ad.InterstitialAdManager
-import com.example.notetaker.ad.NativeAdview
+import com.example.notetaker.ad.NativeAdStyle
+import com.example.notetaker.ad.NativeAdComponent
 import com.example.notetaker.ad.RewardedAdManager
 import com.example.notetaker.ad.findActivity
 import com.example.notetaker.screen.common.NoteItem
@@ -57,12 +60,67 @@ fun HomeScreen(
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() }
 
-    val rewardedAdManager = remember { RewardedAdManager() }
-    val interstitialAdManager = remember { InterstitialAdManager() }
+
+
+    var showAdPromptDialog by remember { mutableStateOf(false) }
+    var isLoadingRewardedAd by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        rewardedAdManager.loadAd(context)
-        interstitialAdManager.loadAd(context)
+        InterstitialAdManager.loadAd(context)
+    }
+
+    if (showAdPromptDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showAdPromptDialog = false },
+            title = { Text("Giới hạn ghi chú") },
+            text = { Text("Bạn đã đạt giới hạn 5 ghi chú miễn phí. Bạn có muốn xem quảng cáo để tiếp tục tạo ghi chú mới không?") },
+            confirmButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = {
+                        showAdPromptDialog = false
+                        if (activity != null) {
+                            isLoadingRewardedAd = true
+                            RewardedAdManager.loadAndShowAd(
+                                activity = activity,
+                                onRewardEarned = {
+                                    isLoadingRewardedAd = false
+                                    navController.navigate(Screen.NoteScreen.createRoute(-1))
+                                },
+                                onAdFailedToLoad = { errorMsg ->
+                                    isLoadingRewardedAd = false
+                                    Toast.makeText(
+                                        context,
+                                        "Không thể tải quảng cáo: $errorMsg",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                },
+                                onAdDismissedWithoutReward = {
+                                    isLoadingRewardedAd = false
+                                    Log.d("HomeScreen", "HomeScreen: Người dùng chưa xem hết ad")
+                                }
+                            )
+                        } else {
+                            navController.navigate(Screen.NoteScreen.createRoute(-1))
+                        }
+                    }
+                ) {
+                    Text("Xem quảng cáo")
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = { showAdPromptDialog = false }
+                ) {
+                    Text("Bỏ qua")
+                }
+            }
+        )
+    }
+
+    if (isLoadingRewardedAd) {
+        com.example.notetaker.ad.RewardedAdLoadingDialog(
+            onDismiss = { isLoadingRewardedAd = false }
+        )
     }
 
     Scaffold(
@@ -74,33 +132,15 @@ fun HomeScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    if(activity != null){
-                        rewardedAdManager.showAd(
-                            activity = activity,
-                            onRewardEarned = {
-                                navController.navigate(Screen.NoteScreen.createRoute(-1))
-                            },
-                            onAdNotReady = {
-                                Toast.makeText(
-                                    context,
-                                    "Quảng cáo đang tải, vui lòng thử lại sau vài giây!",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            },
-                            onAdDismissedWithoutReward =
-                                {
-                                    Log.d("HomeScreen", "HomeScreen: Người dùng chưa xem hết ad")
-                                }
-                        )
-                    }
-                    else{
+                    if (notes.size < 5) {
                         navController.navigate(Screen.NoteScreen.createRoute(-1))
+                    } else {
+                        showAdPromptDialog = true
                     }
-            }, shape = CircleShape) {
+                }, shape = CircleShape) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = "Add note",
-
                 )
             }
         }
@@ -133,9 +173,9 @@ fun HomeScreen(
                 singleLine = true
             )
 
-            NativeAdview(
-                modifier = Modifier.fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            NativeAdComponent(
+                style = NativeAdStyle.LARGE,
+                modifier = Modifier.padding(horizontal = 8.dp)
             )
 
             if (notes.isEmpty()) {
@@ -160,7 +200,7 @@ fun HomeScreen(
                             note = note,
                             onClick = {
                                 if(activity != null){
-                                    interstitialAdManager.showAd(
+                                    InterstitialAdManager.showAd(
                                         activity = activity,
                                         onAdDismissed = {
                                             navController.navigate(Screen.NoteScreen.createRoute(note.id))

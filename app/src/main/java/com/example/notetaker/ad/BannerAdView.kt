@@ -92,19 +92,23 @@ fun BannerAdView (
 
     }
 
-    bannerAdState?.let { bannerAd ->
-        Box(
-            modifier = modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            AndroidView(
-                modifier = Modifier.wrapContentSize(),
-                factory = { ctx ->
-                    val activity = ctx.findActivity() ?: (ctx as Activity)
-                    bannerAd.getView(activity)
-                }
-            )
+    if (bannerAdState != null) {
+        bannerAdState?.let { bannerAd ->
+            Box(
+                modifier = modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                AndroidView(
+                    modifier = Modifier.wrapContentSize(),
+                    factory = { ctx ->
+                        val activity = ctx.findActivity() ?: (ctx as Activity)
+                        bannerAd.getView(activity)
+                    }
+                )
+            }
         }
+    } else {
+        BannerAdShimmer(modifier = modifier)
     }
 
 

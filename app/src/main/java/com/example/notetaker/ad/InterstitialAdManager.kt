@@ -3,72 +3,106 @@ package com.example.notetaker.ad
 import android.app.Activity
 import android.content.Context
 import android.util.Log
-import com.example.notetaker.MainActivity
 import com.google.android.libraries.ads.mobile.sdk.common.AdLoadCallback
 import com.google.android.libraries.ads.mobile.sdk.common.AdRequest
 import com.google.android.libraries.ads.mobile.sdk.common.FullScreenContentError
 import com.google.android.libraries.ads.mobile.sdk.common.LoadAdError
 import com.google.android.libraries.ads.mobile.sdk.interstitial.InterstitialAd
 import com.google.android.libraries.ads.mobile.sdk.interstitial.InterstitialAdEventCallback
+import java.util.concurrent.ConcurrentHashMap
 
-class InterstitialAdManager {
-    private var interstitialAd: InterstitialAd? =null
-    private var isLoading = false
+object InterstitialAdManager {
 
-    companion object {
-        private const val AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
-    }
+    private val AD_UNIT_ID: String = "ca-app-pub-3940256099942544/1033173712"
+    private val KEY: String =  "interstitial"
+    private val AD_EXPIRATION_TIME_MS: Long = 4 * 3600 * 1000L
 
-    fun loadAd(context: Context){
-        if (interstitialAd != null || isLoading) return
-        isLoading = true
+    private val adMap = ConcurrentHashMap<String, InterstitialAd>()
 
-        val adRequest = AdRequest.Builder(AD_UNIT_ID).build()
+    private val loadingMap = ConcurrentHashMap<String, Boolean>()
+
+    private val loadTimeMap = ConcurrentHashMap<String, Long>()
+
+
+
+    fun loadAd(
+        context: Context,
+        placementKey: String = KEY,
+        adUnitId: String = AD_UNIT_ID
+    ){
+        val appContext = context.applicationContext
+
+        if(isAdReady(placementKey) || loadingMap[placementKey] == true){
+            Log.d("InterstitialAd", "[$placementKey] Quảng cáo đã sẵn sàng.")
+            return
+        }
+        loadingMap[placementKey] = true
+        Log.d("InterstitialAd", "[$placementKey] Đang gửi yêu cầu nạp quảng cáo ngầm...")
+
+
+
+        val adRequest = AdRequest.Builder(adUnitId).build()
 
         InterstitialAd.load(
             adRequest,
             object : AdLoadCallback<InterstitialAd>{
                 override fun onAdLoaded(ad: InterstitialAd) {
                     Log.d("InterstitialAd","Tải quảng cáo Interstitial thành công")
-                    interstitialAd = ad
-                    isLoading = false
+                    adMap[placementKey] = ad
+                    loadTimeMap[placementKey] = System.currentTimeMillis()
+                    loadingMap[placementKey] = false
                 }
 
                 override fun onAdFailedToLoad(adError: LoadAdError) {
                     Log.e("InterstitialAd", "Lỗi tải quảng cáo Interstitial:  ${adError.message}")
-                    interstitialAd = null
-                    isLoading = false
+                    clearCache(placementKey)
+                    loadingMap[placementKey] = false
                 }
             }
         )
     }
 
-    fun showAd (activity: Activity, onAdDismissed:()-> Unit){
-        val ad = interstitialAd
-        if (ad==null){
+    fun isAdReady(placementKey: String = KEY): Boolean {
+        val ad = adMap[placementKey] ?: return false
+        val loadTime = loadTimeMap[placementKey] ?: 0L
+        val isExpired = (System.currentTimeMillis() - loadTime) > AD_EXPIRATION_TIME_MS
+        if (isExpired) {
+            Log.w("InterstitialAd", "[$placementKey] Quảng cáo đã quá hạn 4 tiếng. Tiến hành hủy bỏ cờ cache.")
+            clearCache(placementKey)
+            return false
+        }
+        return true
+    }
+
+    fun showAd (
+        activity: Activity,
+        placementKey: String = KEY,
+        adUnitId: String = AD_UNIT_ID,
+        onAdDismissed:()-> Unit
+    ){
+        val ad = adMap[placementKey]
+        if (ad==null || !isAdReady(placementKey)){
             Log.d("InterstitialAd", "Quảng cáo Interstitial chưa sẵn sàng ")
             onAdDismissed()
-            loadAd(activity)
+            loadAd(activity.applicationContext, placementKey, adUnitId)
             return
         }
         ad.adEventCallback = object : InterstitialAdEventCallback{
             override fun onAdShowedFullScreenContent() {
-                Log.d("InterstitialAd", "Quảng cáo Interstitial đang hiển thị toàn màn hình")
+                Log.d("InterstitialAd", "Quảng cáo Interstitial đang hiển thị")
             }
 
             override fun onAdDismissedFullScreenContent() {
                 Log.d("InterstitialAd", "Người dùng đã đóng quảng cáo Interstitial")
-                interstitialAd = null
-                loadAd(activity)
-                activity.runOnUiThread {
-                    onAdDismissed()
-                }
+                clearCache(placementKey)
+                loadAd(activity.applicationContext, placementKey, adUnitId)
+                activity.runOnUiThread { onAdDismissed() }
             }
 
             override fun onAdFailedToShowFullScreenContent(fullScreenContentError: FullScreenContentError) {
                 Log.e("InterstitialAd", "Lỗi hiển thị quảng cáo Interstitial: $fullScreenContentError")
-                interstitialAd = null
-                loadAd(activity)
+                clearCache(placementKey)
+                loadAd(activity.applicationContext, placementKey, adUnitId)
                 activity.runOnUiThread {
                     onAdDismissed()
                 }
@@ -83,5 +117,8 @@ class InterstitialAdManager {
 
         ad.show(activity)
     }
-
+    private fun clearCache(placementKey: String) {
+        adMap.remove(placementKey)
+        loadTimeMap.remove(placementKey)
+    }
 }
