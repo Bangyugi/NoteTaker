@@ -108,7 +108,7 @@ class AppOpenAdManager {
     }
 
     /** Check if ad exists and can be shown. */
-    private fun isAdAvailable(): Boolean {
+    fun isAdAvailable(): Boolean {
         return appOpenAd != null && wasLoadTimeLessThanNHoursAgo(4)
     }
 

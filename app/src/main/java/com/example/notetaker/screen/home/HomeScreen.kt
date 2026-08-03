@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -28,26 +27,25 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.notetaker.ad.AdFactory
+import com.example.notetaker.ad.AdType
 import com.example.notetaker.ad.BannerAdView
-import com.example.notetaker.ad.InterstitialAdManager
-import com.example.notetaker.ad.NativeAdStyle
+import com.example.notetaker.ad.DefaultAdFactory
 import com.example.notetaker.ad.NativeAdComponent
-import com.example.notetaker.ad.RewardedAdManager
+import com.example.notetaker.ad.NativeAdStyle
 import com.example.notetaker.ad.findActivity
 import com.example.notetaker.screen.common.NoteItem
 import com.example.notetaker.screen.navigation.Screen
-import kotlin.math.log
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,13 +58,15 @@ fun HomeScreen(
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() }
 
-
+    val adFactory: AdFactory = remember { DefaultAdFactory() }
+    val interstitialAdController = remember { adFactory.createAdController(AdType.INTERSTITIAL) }
+    val rewardedAdController = remember { adFactory.createAdController(AdType.REWARDED) }
 
     var showAdPromptDialog by remember { mutableStateOf(false) }
     var isLoadingRewardedAd by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        InterstitialAdManager.loadAd(context)
+        interstitialAdController.loadAd(context)
     }
 
     if (showAdPromptDialog) {
@@ -80,25 +80,10 @@ fun HomeScreen(
                         showAdPromptDialog = false
                         if (activity != null) {
                             isLoadingRewardedAd = true
-                            RewardedAdManager.loadAndShowAd(
-                                activity = activity,
-                                onRewardEarned = {
-                                    isLoadingRewardedAd = false
-                                    navController.navigate(Screen.NoteScreen.createRoute(-1))
-                                },
-                                onAdFailedToLoad = { errorMsg ->
-                                    isLoadingRewardedAd = false
-                                    Toast.makeText(
-                                        context,
-                                        "Không thể tải quảng cáo: $errorMsg",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                },
-                                onAdDismissedWithoutReward = {
-                                    isLoadingRewardedAd = false
-                                    Log.d("HomeScreen", "HomeScreen: Người dùng chưa xem hết ad")
-                                }
-                            )
+                            rewardedAdController.showAd(activity) {
+                                isLoadingRewardedAd = false
+                                navController.navigate(Screen.NoteScreen.createRoute(-1))
+                            }
                         } else {
                             navController.navigate(Screen.NoteScreen.createRoute(-1))
                         }
@@ -199,15 +184,11 @@ fun HomeScreen(
                         NoteItem(
                             note = note,
                             onClick = {
-                                if(activity != null){
-                                    InterstitialAdManager.showAd(
-                                        activity = activity,
-                                        onAdDismissed = {
-                                            navController.navigate(Screen.NoteScreen.createRoute(note.id))
-                                        }
-                                    )
-                                }
-                                else{
+                                if (activity != null) {
+                                    interstitialAdController.showAd(activity) {
+                                        navController.navigate(Screen.NoteScreen.createRoute(note.id))
+                                    }
+                                } else {
                                     navController.navigate(Screen.NoteScreen.createRoute(note.id))
                                 }
                             },

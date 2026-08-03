@@ -6,10 +6,11 @@ import android.os.Bundle
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
+import com.example.notetaker.ad.AdFactory
+import com.example.notetaker.ad.AdType
 import com.example.notetaker.ad.AppOpenAdManager
-import com.example.notetaker.ad.InterstitialAdManager
+import com.example.notetaker.ad.DefaultAdFactory
 import com.example.notetaker.ad.NativeAdManager
-import com.example.notetaker.ad.RewardedAdManager
 import com.google.android.libraries.ads.mobile.sdk.MobileAds
 import com.google.android.libraries.ads.mobile.sdk.initialization.InitializationConfig
 import dagger.hilt.android.HiltAndroidApp
@@ -30,11 +31,12 @@ DefaultLifecycleObserver{
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
 
         appOpenAdManager = AppOpenAdManager()
+        val adFactory: AdFactory = DefaultAdFactory()
 
         CoroutineScope(Dispatchers.IO).launch {
             MobileAds.initialize(this@NoteTakerApplication, InitializationConfig.Builder(APP_ID).build()) {
-                appOpenAdManager.loadAd(this@NoteTakerApplication)
-                InterstitialAdManager.loadAd(this@NoteTakerApplication)
+                adFactory.preloadAd(AdType.APP_OPEN, this@NoteTakerApplication)
+                adFactory.preloadAd(AdType.INTERSTITIAL, this@NoteTakerApplication)
                 NativeAdManager.loadAd(this@NoteTakerApplication, "home_native")
             }
         }
