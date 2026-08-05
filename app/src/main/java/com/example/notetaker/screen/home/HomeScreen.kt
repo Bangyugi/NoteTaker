@@ -62,6 +62,15 @@ fun HomeScreen(
 
 
 
+    val adFactory: com.example.notetaker.ad.AdFactory = remember {
+        com.example.notetaker.ad.RoundRobinAdFactory(
+            listOf(
+                com.example.notetaker.ad.AdMobAdFactory(),
+                com.example.notetaker.ad.MockAdFactory()
+            )
+        )
+    }
+
     var showAdPromptDialog by remember { mutableStateOf(false) }
     var isLoadingRewardedAd by remember { mutableStateOf(false) }
 
@@ -199,15 +208,17 @@ fun HomeScreen(
                         NoteItem(
                             note = note,
                             onClick = {
-                                if(activity != null){
-                                    InterstitialAdManager.showAd(
+                                if (activity != null) {
+                                    val controller = adFactory.createInterstitialAdController()
+                                    Log.d("AdRotation", "==> Factory đã xoay chọn Provider: ${controller.javaClass.simpleName}")
+                                    controller.loadAd(context)
+                                    controller.showAd(
                                         activity = activity,
                                         onAdDismissed = {
                                             navController.navigate(Screen.NoteScreen.createRoute(note.id))
                                         }
                                     )
-                                }
-                                else{
+                                } else {
                                     navController.navigate(Screen.NoteScreen.createRoute(note.id))
                                 }
                             },
