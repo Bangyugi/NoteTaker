@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +42,11 @@ fun BannerAdView (
 
 ){
     val context = LocalContext.current
+    val isAdFree = NativeAdManager.billingRepository?.isAdFree?.collectAsState()?.value ?: false
+    if (isAdFree) {
+        return
+    }
+
     var bannerAdState by remember { mutableStateOf<BannerAd?>(null) }
     val adSize = AdSize.getLargeAnchoredAdaptiveBannerAdSize(context, 360)
     val isPreviewMode = LocalInspectionMode.current

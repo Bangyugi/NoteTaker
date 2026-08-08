@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,6 +47,11 @@ fun NativeAdComponent(
     style: NativeAdStyle = NativeAdStyle.SMALL
 ) {
     val context = LocalContext.current
+    val isAdFree = NativeAdManager.billingRepository?.isAdFree?.collectAsState()?.value ?: false
+    if (isAdFree) {
+        return
+    }
+
     var nativeAd by remember { mutableStateOf<NativeAd?>(NativeAdManager.getAd(placementKey)) }
     val isPreviewMode = LocalInspectionMode.current
 

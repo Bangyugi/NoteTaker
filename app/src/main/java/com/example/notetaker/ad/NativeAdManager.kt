@@ -22,12 +22,18 @@ object NativeAdManager {
     private val loadingMap = ConcurrentHashMap<String, Boolean>()
     private val loadTimeMap = ConcurrentHashMap<String, Long>()
 
+    var billingRepository: com.example.notetaker.data.repository.BillingRepository? = null
+
     fun loadAd(
         context: Context,
         placementKey: String = DEFAULT_KEY,
         adUnitId: String = TEST_NATIVE_AD_UNIT_ID,
         onAdLoaded: ((NativeAd) -> Unit)? = null
     ) {
+        if (billingRepository?.isAdFree?.value == true) {
+            Log.d(TAG, "App is ad-free. Bypassing loadAd.")
+            return
+        }
         if (adMap[placementKey] != null) {
             Log.d(TAG, "[$placementKey] Native ad đã sẵn sàng.")
             getAd(placementKey)?.let { onAdLoaded?.invoke(it) }

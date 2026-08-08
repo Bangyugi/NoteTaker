@@ -10,16 +10,21 @@ import com.example.notetaker.ad.AppOpenAdManager
 import com.example.notetaker.ad.InterstitialAdManager
 import com.example.notetaker.ad.NativeAdManager
 import com.example.notetaker.ad.RewardedAdManager
+import com.example.notetaker.data.repository.BillingRepository
 import com.google.android.libraries.ads.mobile.sdk.MobileAds
 import com.google.android.libraries.ads.mobile.sdk.initialization.InitializationConfig
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltAndroidApp
 class NoteTakerApplication: Application(), Application.ActivityLifecycleCallbacks,
 DefaultLifecycleObserver{
+
+    @Inject
+    lateinit var billingRepository: BillingRepository
 
     private lateinit var appOpenAdManager: AppOpenAdManager
     private var currentActivity: Activity? = null
@@ -30,21 +35,29 @@ DefaultLifecycleObserver{
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
 
         appOpenAdManager = AppOpenAdManager()
+        appOpenAdManager.billingRepository = billingRepository
+        InterstitialAdManager.billingRepository = billingRepository
+        NativeAdManager.billingRepository = billingRepository
+        RewardedAdManager.billingRepository = billingRepository
 
-        CoroutineScope(Dispatchers.IO).launch {
-            MobileAds.initialize(this@NoteTakerApplication, InitializationConfig.Builder(APP_ID).build()) {
-                appOpenAdManager.loadAd(this@NoteTakerApplication)
-                InterstitialAdManager.loadAd(this@NoteTakerApplication)
-                NativeAdManager.loadAd(this@NoteTakerApplication, "home_native")
+        if (!billingRepository.isAdFree.value) {
+            CoroutineScope(Dispatchers.IO).launch {
+                MobileAds.initialize(this@NoteTakerApplication, InitializationConfig.Builder(APP_ID).build()) {
+                    appOpenAdManager.loadAd(this@NoteTakerApplication)
+                    InterstitialAdManager.loadAd(this@NoteTakerApplication)
+                    NativeAdManager.loadAd(this@NoteTakerApplication, "home_native")
+                }
             }
         }
     }
 
     override fun onStart(owner: LifecycleOwner) {
         super.onStart(owner)
-        currentActivity?.let { activity ->
-            appOpenAdManager.showAdIfAvailable(activity) {
+        if (!billingRepository.isAdFree.value) {
+            currentActivity?.let { activity ->
+                appOpenAdManager.showAdIfAvailable(activity) {
 
+                }
             }
         }
     }

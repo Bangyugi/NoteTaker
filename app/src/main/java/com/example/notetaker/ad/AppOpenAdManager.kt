@@ -19,12 +19,18 @@ class AppOpenAdManager {
     private var appOpenAd: AppOpenAd? = null
     private var isLoadingAd = false
     var isShowingAd = false
-    private var loadTime: Long = 0;
+    private var loadTime: Long = 0
+    var billingRepository: com.example.notetaker.data.repository.BillingRepository? = null
+
     companion object {
         private const val AD_UNIT_ID = "ca-app-pub-3940256099942544/9257395921"
     }
 
     fun loadAd(context: Context) {
+        if (billingRepository?.isAdFree?.value == true) {
+            Log.d("AppOpenTag", "App is ad-free. Skipping loadAd.")
+            return
+        }
         if (isLoadingAd || isAdAvailable()) {
             Log.d("AppOpenTag", "App open ad is either loading or has already loaded.")
             return
@@ -51,6 +57,11 @@ class AppOpenAdManager {
 
 
     fun showAdIfAvailable(activity: Activity, onShowAdCompleteListener: OnShowAdCompleteListener?) {
+        if (billingRepository?.isAdFree?.value == true) {
+            Log.d("AppOpenTag", "App is ad-free. Bypassing showAdIfAvailable.")
+            onShowAdCompleteListener?.onShowAdComplete()
+            return
+        }
         if (isShowingAd) {
             Log.d("AppOpenTag", "App open ad is already showing.")
             onShowAdCompleteListener?.onShowAdComplete()

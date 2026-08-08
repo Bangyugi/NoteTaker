@@ -17,6 +17,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -71,8 +73,48 @@ fun HomeScreen(
         )
     }
 
+    val isAdFree by viewModel.isAdFree.collectAsState()
+    var showBillingDialog by remember { mutableStateOf(false) }
     var showAdPromptDialog by remember { mutableStateOf(false) }
     var isLoadingRewardedAd by remember { mutableStateOf(false) }
+
+    if (showBillingDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showBillingDialog = false },
+            title = { Text("Giả lập Mua Xóa Quảng Cáo (Billing)") },
+            text = {
+                Text(
+                    if (isAdFree)
+                        "Trạng thái hiện tại: Đã Xóa Quảng Cáo (VIP Enabled).\nBạn có muốn Reset để bật lại quảng cáo không?"
+                    else
+                        "Trạng thái hiện tại: Chưa Mua.\nGiả lập mua gói Xóa Quảng Cáo ($1.99) để tắt tất cả quảng cáo trong App."
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.Button(
+                    onClick = {
+                        if (isAdFree) {
+                            viewModel.resetPurchase()
+                            Toast.makeText(context, "Đã Reset trạng thái Quảng cáo!", Toast.LENGTH_SHORT).show()
+                        } else {
+                            viewModel.buyRemoveAds()
+                            Toast.makeText(context, "Đã kích hoạt Xóa Quảng Cáo (Simulated)! ", Toast.LENGTH_SHORT).show()
+                        }
+                        showBillingDialog = false
+                    }
+                ) {
+                    Text(if (isAdFree) "Reset Quảng cáo" else "Giả lập Mua ($1.99)")
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = { showBillingDialog = false }
+                ) {
+                    Text("Đóng")
+                }
+            }
+        )
+    }
 
     LaunchedEffect(Unit) {
         InterstitialAdManager.loadAd(context)
@@ -135,13 +177,22 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Danh sách ghi chú") }
+                title = { Text("Danh sách ghi chú") },
+                actions = {
+                    IconButton(onClick = { showBillingDialog = true }) {
+                        Icon(
+                            imageVector = if (isAdFree) Icons.Default.Star else Icons.Default.ShoppingCart,
+                            contentDescription = "Remove Ads / VIP",
+                            tint = if (isAdFree) androidx.compose.ui.graphics.Color(0xFFFFD700) else androidx.compose.ui.graphics.Color.Unspecified
+                        )
+                    }
+                }
             )
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    if (notes.size < 5) {
+                    if (isAdFree || notes.size < 5) {
                         navController.navigate(Screen.NoteScreen.createRoute(-1))
                     } else {
                         showAdPromptDialog = true

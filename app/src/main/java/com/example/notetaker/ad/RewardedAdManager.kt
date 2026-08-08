@@ -19,6 +19,8 @@ object RewardedAdManager {
 
     private val loadingMap = ConcurrentHashMap<String, Boolean>()
 
+    var billingRepository: com.example.notetaker.data.repository.BillingRepository? = null
+
     fun loadAndShowAd(
         activity: Activity,
         placementKey: String = DEFAULT_KEY,
@@ -27,6 +29,11 @@ object RewardedAdManager {
         onAdFailedToLoad: (String) -> Unit,
         onAdDismissedWithoutReward: () -> Unit = {}
     ) {
+        if (billingRepository?.isAdFree?.value == true) {
+            Log.d("RewardedAdManager", "App is ad-free. Bypassing RewardedAd.")
+            onAdDismissedWithoutReward()
+            return
+        }
         if (loadingMap[placementKey] == true) {
             Log.d("RewardedAdManager", "[$placementKey] Quảng cáo Rewarded đang được tải, bỏ qua yêu cầu trùng lặp.")
             return

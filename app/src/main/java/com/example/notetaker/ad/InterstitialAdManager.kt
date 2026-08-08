@@ -23,13 +23,17 @@ object InterstitialAdManager {
 
     private val loadTimeMap = ConcurrentHashMap<String, Long>()
 
-
+    var billingRepository: com.example.notetaker.data.repository.BillingRepository? = null
 
     fun loadAd(
         context: Context,
         placementKey: String = KEY,
         adUnitId: String = AD_UNIT_ID
     ){
+        if (billingRepository?.isAdFree?.value == true) {
+            Log.d("InterstitialAd", "App is ad-free. Bypassing loadAd.")
+            return
+        }
         val appContext = context.applicationContext
 
         if(isAdReady(placementKey) || loadingMap[placementKey] == true){
@@ -38,8 +42,6 @@ object InterstitialAdManager {
         }
         loadingMap[placementKey] = true
         Log.d("InterstitialAd", "[$placementKey] Đang gửi yêu cầu nạp quảng cáo ngầm...")
-
-
 
         val adRequest = AdRequest.Builder(adUnitId).build()
 
@@ -63,6 +65,7 @@ object InterstitialAdManager {
     }
 
     fun isAdReady(placementKey: String = KEY): Boolean {
+        if (billingRepository?.isAdFree?.value == true) return false
         val ad = adMap[placementKey] ?: return false
         val loadTime = loadTimeMap[placementKey] ?: 0L
         val isExpired = (System.currentTimeMillis() - loadTime) > AD_EXPIRATION_TIME_MS
@@ -80,6 +83,11 @@ object InterstitialAdManager {
         adUnitId: String = AD_UNIT_ID,
         onAdDismissed:()-> Unit
     ){
+        if (billingRepository?.isAdFree?.value == true) {
+            Log.d("InterstitialAd", "App is ad-free. Bypassing showAd.")
+            onAdDismissed()
+            return
+        }
         val ad = adMap[placementKey]
         if (ad==null || !isAdReady(placementKey)){
             Log.d("InterstitialAd", "Quảng cáo Interstitial chưa sẵn sàng ")

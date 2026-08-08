@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.notetaker.data.NoteEntity
 import com.example.notetaker.repository.NoteRepository
+import com.example.notetaker.data.repository.BillingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,8 +20,19 @@ import javax.inject.Inject
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val repository: NoteRepository
+    private val repository: NoteRepository,
+    private val billingRepository: BillingRepository
 ): ViewModel(){
+
+    val isAdFree: StateFlow<Boolean> = billingRepository.isAdFree
+
+    fun buyRemoveAds() {
+        billingRepository.buyRemoveAds()
+    }
+
+    fun resetPurchase() {
+        billingRepository.resetPurchase()
+    }
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
